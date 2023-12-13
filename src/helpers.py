@@ -63,7 +63,7 @@ class paths:
         return os.path.join(self._folder, "cifar10_test.pkl")
 
     def get_path_file_model(self, prefix="1"):
-        result = os.path.join(self._folder, prefix, ".pkl")
+        result = os.path.join(self._folder, prefix+".pkl")
         return result
 
     def get_path_file_modelverteidigung(self):
