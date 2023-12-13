@@ -39,7 +39,7 @@ def save_object_to_pkl(obj, object_path):
 class paths:
     def __init__(self) -> None:
         # folder-path
-        self._folder = "data"
+        self._folder = "model"
 
     def get_path_folder_data(self):
         return self._folder
