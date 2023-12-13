@@ -1,5 +1,5 @@
-import helpers
-import dataPreparation
+import src.helpers as helpers
+import src.dataPreparation as dataPreparation
 from absl import app, flags
 from easydict import EasyDict
 import torch
@@ -15,9 +15,8 @@ def main(_):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = dataPreparation.ld(ds=FLAGS.dataset, reduced=FLAGS.reduceDataset,
                               batchsize=FLAGS.bs)
-    prefix = "M_cnn_D_fmnist"
-    filename = paths.get_path_file_model(prefix)
-    model = helpers.get_object_from_pkl(filename)
+    filepath = paths.get_path_file_model(FLAGS.filename)
+    model = helpers.get_object_from_pkl(filepath)
     if device == "cuda":
         model = model.cuda()
 
@@ -26,9 +25,6 @@ def main(_):
     report = EasyDict(nb_test=0, correct=0)
 
     for i, (x, y) in enumerate(data.test):
-        if i == 1:
-            torch.save(x, 'input.pt')
-            torch.save(y, 'output.pt')
         x, y = x.to(device), y.to(device)
         _, y_pred = model(x).max(1)  # model prediction on clean examples
 
@@ -50,5 +46,8 @@ if __name__ == "__main__":
     flags.DEFINE_bool(
         "reduceDataset", False, "Reduce Dataset testing the implementation"
     )
+    flags.DEFINE_enum("filename", "M_cnn_D_fmnist", [
+                      "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10"], 
+                      "Filename for model.")
 
     app.run(main)

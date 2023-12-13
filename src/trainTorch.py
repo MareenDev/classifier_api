@@ -1,11 +1,8 @@
 from absl import app, flags
 import time
-import dataPreparation
+import src.dataPreparation as dataPreparation
 import src.helpers as helpers
-# from easydict import EasyDict
-import numpy as np
 import torch
-# from torchvision import datasets, transforms
 from src.model1 import CNN, PyNet
 
 FLAGS = flags.FLAGS
@@ -39,15 +36,6 @@ def main(_):
         train_loss = 0.0
         for x, y in data.train:
             x, y = x.to(device), y.to(device)
-            if FLAGS.adv_train:
-                # Replace clean example with adversarial example for 
-                # adversarial training
-                if FLAGS.adv_attack == 'pgd':
-                    x = projected_gradient_descent(net, x, FLAGS.eps, 0.01, 40, 
-                                                   np.inf)
-                else:
-                    x = fast_gradient_method(net, x, FLAGS.eps, np.inf)
-
             optimizer.zero_grad()
             loss = loss_fn(net(x), y)
             loss.backward()
@@ -71,14 +59,12 @@ if __name__ == "__main__":
     flags.DEFINE_enum("dataset", "fmnist", ["mnist", "fmnist", "cifar10"], 
                       "Used Dataset.")
     flags.DEFINE_integer("nb_epochs", 5, "Number of epochs.")
-    flags.DEFINE_float("eps", 0.3, "Total epsilon for FGM and PGD attacks.")
-    flags.DEFINE_bool(
-        "adv_train", False, "Use adversarial training (with PGD examples)."
-    )
     flags.DEFINE_integer("bs", 100, "Batchsize")
-    flags.DEFINE_enum("adv_attack", "pgd", ["pgd", "fgsm"],
-                      "Choose adv. attack for adv.  Example Generation.")
     flags.DEFINE_enum("model", "cnn", ["cnn", "pynet", "net"], "Choose model.")
     flags.DEFINE_bool("reduceDataset", False, "Reduce Dataset")
     flags.DEFINE_float("learningRate", 0.001, "Learning rate.")
+    flags.DEFINE_enum("filename", "M_cnn_D_fmnist", [
+        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10"],
+        "Filename for model.")
+
     app.run(main)
