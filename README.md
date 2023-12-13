@@ -23,9 +23,7 @@ API für Zugriff auf Fashion-MNIST-Classifier
    ```
 
 ## Starten des Webservices (VSCode/Entwicklungsumgebung)
-   ```
-   ./src/wsgi.py
-   ```
+   Run Skript .\wsgi.py
 
 ## Aufruf des Webservices
    Aufruf der URL: http://127.0.0.1:5000/
