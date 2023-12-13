@@ -160,7 +160,4 @@ cython_debug/
 #.idea/
 
 /data/*
-/src/test.py
-input.pt
-output.pt
-/model/M_cnn_D_fmnist.pkl
+
