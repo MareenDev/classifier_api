@@ -163,3 +163,4 @@ cython_debug/
 /src/test.py
 input.pt
 output.pt
+/model/M_cnn_D_fmnist.pkl
