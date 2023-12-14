@@ -1,5 +1,4 @@
-import src.helpers as helpers
-import src.dataPreparation as dataPreparation
+import helpers as helpers
 from absl import app, flags
 from easydict import EasyDict
 import torch
@@ -13,7 +12,7 @@ def main(_):
     beginn = time.time()
     paths = helpers.paths()
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    data = dataPreparation.ld(ds=FLAGS.dataset, reduced=FLAGS.reduceDataset,
+    data = helpers.ld(ds=FLAGS.dataset, reduced=FLAGS.reduceDataset,
                               batchsize=FLAGS.bs)
     filepath = paths.get_path_file_model(FLAGS.filename)
     model = helpers.get_object_from_pkl(filepath)

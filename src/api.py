@@ -1,18 +1,19 @@
 from flask import Flask, Response, request
 from flask_cors import CORS
 import json
-import src.helpers as helpers
-from src.dataPreparation import outputMapping
-
+import helpers 
+import torch
 
 app = Flask(__name__)
 CORS(app)
 
-
 paths = helpers.paths()
-prefix = "M_cnn_D_fmnist"  # "M_" + FLAGS.model + "_D_" + FLAGS.dataset
-filepath = paths.get_path_file_model(prefix)
+filepath = paths.get_path_file_model("M_cnn_D_fmnist")
 model = helpers.get_object_from_pkl(filepath)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+if device == "cuda":
+    model = model.cuda()
 
 
 @app.route('/', methods=['GET'])
@@ -46,10 +47,13 @@ def predict():
         string = "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut!"
     else: 
         model_input = helpers.convertWSRequestToTensor(json.loads(request.data))
+        model_input = model_input.to(device)
         prediction = model(model_input)
+        
+
         _, label = prediction.max(1)
         label = label.item()
-        string = "{\"label\":"+outputMapping(ds='fmnist', label=label)+"}"
+        string = "{\"label\":"+helpers.outputMapping(ds='fmnist', label=label)+"}"
 
     result.set_data(string)
 
