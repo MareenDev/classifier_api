@@ -1,9 +1,8 @@
 from absl import app, flags
 import time
-import src.dataPreparation as dataPreparation
-import src.helpers as helpers
+import helpers as helpers
 import torch
-from src.model1 import CNN, PyNet
+from model1 import CNN, PyNet
 
 FLAGS = flags.FLAGS
 
@@ -11,7 +10,7 @@ FLAGS = flags.FLAGS
 def main(_):
     beginn = time.time()
     # Load training and test data
-    data = dataPreparation.ld(ds=FLAGS.dataset, reduced=FLAGS.reduceDataset,
+    data = helpers.ld(ds=FLAGS.dataset, reduced=FLAGS.reduceDataset,
                               batchsize=FLAGS.bs)
     inChannel = 1
     # Instantiate model, loss, and optimizer for training
@@ -50,21 +49,20 @@ def main(_):
     print("Das Training ist nach: ", dauer, "Sekunden beendet")
     net.eval()
     paths = helpers.paths()
-    prefix = "M_" + FLAGS.model + "_D_" + FLAGS.dataset
-    filepath = paths.get_path_file_model(prefix)
+    filepath = paths.get_path_file_model(FLAGS.filename)
     helpers.save_object_to_pkl(net, filepath)
 
 
 if __name__ == "__main__":
     flags.DEFINE_enum("dataset", "fmnist", ["mnist", "fmnist", "cifar10"], 
                       "Used Dataset.")
-    flags.DEFINE_integer("nb_epochs", 5, "Number of epochs.")
+    flags.DEFINE_integer("nb_epochs", 25, "Number of epochs.")
     flags.DEFINE_integer("bs", 100, "Batchsize")
-    flags.DEFINE_enum("model", "cnn", ["cnn", "pynet", "net"], "Choose model.")
+    flags.DEFINE_enum("model", "pynet", ["cnn", "pynet", "net"], "Choose model.")
     flags.DEFINE_bool("reduceDataset", False, "Reduce Dataset")
     flags.DEFINE_float("learningRate", 0.001, "Learning rate.")
-    flags.DEFINE_enum("filename", "M_cnn_D_fmnist", [
-        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10"],
+    flags.DEFINE_enum("filename", "M_pynet_D_fmnist", [
+        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10","M_pynet_D_mnist","M_pynet_D_fmnist","M_pynet_D_cifar10"],
         "Filename for model.")
 
     app.run(main)

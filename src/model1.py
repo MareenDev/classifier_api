@@ -6,8 +6,6 @@ import torch
 
 # -------------- ResNetv2 ------------
 
-pass
-
 # -------------- CNNs ------------
 # MNIST
 
