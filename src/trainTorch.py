@@ -58,11 +58,11 @@ if __name__ == "__main__":
                       "Used Dataset.")
     flags.DEFINE_integer("nb_epochs", 25, "Number of epochs.")
     flags.DEFINE_integer("bs", 100, "Batchsize")
-    flags.DEFINE_enum("model", "cnn", ["cnn", "pynet", "net"], "Choose model.")
+    flags.DEFINE_enum("model", "pynet", ["cnn", "pynet", "net"], "Choose model.")
     flags.DEFINE_bool("reduceDataset", False, "Reduce Dataset")
     flags.DEFINE_float("learningRate", 0.001, "Learning rate.")
-    flags.DEFINE_enum("filename", "M_cnn_D_fmnist", [
-        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10"],
+    flags.DEFINE_enum("filename", "M_pynet_D_fmnist", [
+        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10","M_pynet_D_mnist","M_pynet_D_fmnist","M_pynet_D_cifar10"],
         "Filename for model.")
 
     app.run(main)

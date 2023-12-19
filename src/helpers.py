@@ -6,6 +6,10 @@ from easydict import EasyDict
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import time
+import math
+import json
+import PIL as pil
+import torchvision.transforms.functional as F
 
 def get_object_from_pkl(object_path):
     result = None
@@ -72,12 +76,64 @@ class paths:
     def get_path_file_modelverteidigung(self):
         return os.path.join(self._folder, "model1vs.pkl")
 
+def valideRequest(request):
+    result = False
+        
+    try: 
+        req = json.loads(request.data)
+        channel =  int(req["channel"])
+        height =  int(req["img_size"][0])
+        width =  int(req["img_size"][1])
+        content = req["data"]
+        # print("Data",len(content),"Prod",width*height)
+
+        if channel == 3: # Prüfung der data struktur auf r,g,b Attribute
+            content_r = req["data"]["r"]
+            content_g = req["data"]["g"]
+            content_b = req["data"]["b"]
+                # print("R",len(content_r),"G",len(content_g) ,"B",len(content_b),"Prod",width*height)
+            if (len(content_r) == len(content_g) == len(content_b)) and (len(content_r) == width*height):
+                result = True
+        elif channel== 1 and width*height == len(content):
+            result = True
+    except: 
+        pass
+    return result
+
 
 def convertWSRequestToTensor(req):
-    content = req["data"]
-    arr = np.array(content, dtype='f')/255
-    model_input = torch.from_numpy(arr)
-    model_input = model_input.reshape(shape=(1, 1, 28, 28))
+    channel =  int(req["channel"])
+    height =  int(req["img_size"][0])
+    width =  int(req["img_size"][1])
+    print("Kanal:",channel,"Höhe:",height, "Breite:",width)
+
+    image_size_req = (height, width)
+    input_size_req = (channel, height, width)
+
+    image_size_target = (28, 28)
+    input_size_model = (1, 1, 28, 28)
+
+    # Create Tensor by request with shape like 'input_size_req'
+
+    if channel == 1:
+        arr = np.array(req["data"], dtype='f')
+        tens = torch.from_numpy(arr).reshape(input_size_req)
+    else: #channel ==3  Reduce to one channel
+        arr=  np.array([req["data"]["r"],req["data"]["g"],req["data"]["b"]], dtype='f')
+        tens = torch.from_numpy(arr).reshape(input_size_req)
+        transformer = transforms.Compose([transforms.Grayscale(num_output_channels=1)])
+        tens = transformer(tens)
+
+    # Bilddaten auf einen 28*28 bringen
+
+    if image_size_target != image_size_req:
+        transformer = transforms.Compose([transforms.Resize(size=image_size_target, interpolation=F.InterpolationMode.BILINEAR),transforms.CenterCrop(image_size_target)])
+        
+        tens = transformer(tens)
+
+    # Überführe Daten in 
+    model_input = tens.reshape(shape=input_size_model)/255
+    print("Größe des Tensors:",model_input.size())
 
     return model_input
 
