@@ -1,35 +1,49 @@
+
 # from keras import Model
 # from keras.layers import Dense, Dropout, Flatten, Conv2D
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+from torchvision.models import resnet18, resnet50, resnext50_32x4d
 
-# -------------- ResNetv2 ------------
+
+# -------------- ResNet ------------
+# MNIST
+#https://zablo.net/blog/post/pytorch-resnet-mnist-jupyter-notebook-2021/
+class resnet18MNIST(nn.Module):
+    def __init__(self, in_channel = 1):
+        super().__init__()
+        self.model = resnet18(num_classes=10)
+        self.model.conv1 = nn.Conv2d(in_channel,64,kernel_size=(7,7),stride=(2,2),padding=(3,3),bias=False)
+        self.loss = nn.CrossEntropyLoss()
+
+    def forward(self,x):
+        return self.model(x)
+
+class resnet50MNIST(nn.Module):
+    def __init__(self, in_channel = 1):
+        super().__init__()
+        self.model = resnet50(num_classes=10)
+        self.model.conv1 = nn.Conv2d(in_channel,64,kernel_size=(7,7),stride=(2,2),padding=(3,3),bias=False)
+        self.loss = nn.CrossEntropyLoss()
+
+    def forward(self,x):
+        return self.model(x)
+
+# -------------- ResNext ------------
+# MNIST in anlehnung an https://zablo.net/blog/post/pytorch-resnet-mnist-jupyter-notebook-2021/
+class resnext50_32x4d_MNIST(nn.Module):
+    def __init__(self, in_channel = 1):
+        super().__init__()
+        self.model = resnext50_32x4d(num_classes=10)
+        self.model.conv1 = nn.Conv2d(in_channel,64,kernel_size=(7,7),stride=(2,2),padding=(3,3),bias=False)
+        self.loss = nn.CrossEntropyLoss()
+
+    def forward(self,x):
+        return self.model(x)
 
 # -------------- CNNs ------------
 # MNIST
-
-
-# class Net(Model):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = Conv2D(64, 8, strides=(2, 2), activation="relu", padding="same")
-#         self.conv1 = Conv2D(64, 8, strides=(2, 2), activation="relu", padding="same")
-#         self.conv2 = Conv2D(128, 6, strides=(2, 2), activation="relu", padding="valid")
-#         self.conv3 = Conv2D(128, 5, strides=(1, 1), activation="relu", padding="valid")
-#         self.dropout = Dropout(0.25)
-#         self.flatten = Flatten()
-#         self.dense1 = Dense(128, activation="relu")
-#         self.dense2 = Dense(10)
-
-#     def call(self, x):
-#         x = self.conv1(x)
-#         x = self.conv2(x)
-#         x = self.conv3(x)
-#         x = self.dropout(x)
-#         x = self.flatten(x)
-#         x = self.dense1(x)
-#         return self.dense2(x)
 
 
 class CNN(nn.Module):
@@ -60,13 +74,41 @@ class CNN(nn.Module):
         x = self.fc2(x)
         return x
 
-
 class PyNet(nn.Module):
     """CNN architecture. This is the same MNIST model from 
     pytorch/examples/mnist repository"""
 
     def __init__(self, in_channels=1):
         super(PyNet, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, 32, 3, 1)
+        self.conv2 = nn.Conv2d(32, 64, 3, 1)
+        self.dropout1 = nn.Dropout(0.25)
+        self.dropout2 = nn.Dropout(0.5)
+        self.fc1 = nn.Linear(9216, 128)
+        self.fc2 = nn.Linear(128, 10)
+
+    def forward(self, x):
+        #x=x.reshape(1,1,28,28)
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)
+        x = self.dropout1(x)
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.dropout2(x)
+        x = self.fc2(x)
+        output = F.log_softmax(x, dim=1)
+        return output
+
+class PyNetSoftmax(nn.Module):
+    """CNN architecture. This is the same MNIST model from 
+    pytorch/examples/mnist repository"""
+
+    def __init__(self, in_channels=1):
+        super(PyNetSoftmax, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, 3, 1)
         self.conv2 = nn.Conv2d(32, 64, 3, 1)
         self.dropout1 = nn.Dropout(0.25)
@@ -86,8 +128,9 @@ class PyNet(nn.Module):
         x = F.relu(x)
         x = self.dropout2(x)
         x = self.fc2(x)
-        output = F.log_softmax(x, dim=1)
+        output = F.softmax(x, dim=1)
         return output
+
 
 # CIFAR-10 - by 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
@@ -113,6 +156,8 @@ class NetCifar(nn.Module):
         return x
 
 # -------------- Transformer ------------
+# MNIST
+
 
 # CIFAR-10 - Impl by
 # https://github.com/pytorch/examples/blob/main/vision_transformer/main.py

@@ -160,3 +160,9 @@ cython_debug/
 #.idea/
 
 /model/*
+/data/test
+/api/*
+/data/*
+src/directHSJ.py
+/.vscode/*
+*.json
