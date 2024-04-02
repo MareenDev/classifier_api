@@ -51,16 +51,10 @@ def main(_):
 
 
 if __name__ == "__main__":
-    flags.DEFINE_enum("dataset", "mnist", [
-                      "mnist", "fmnist", "cifar10"], "Used Dataset.")
+    flags.DEFINE_enum("dataset", "cifar10", ["mnist", "fmnist", "cifar10"], "Used Dataset.")
     flags.DEFINE_integer("bs", 1, "Batchsize")
-    flags.DEFINE_bool(
-        "reduceDataset", False, "Reduce Dataset testing the implementation"
-    )
-    flags.DEFINE_enum("filename", "M_resnext50_D_fmnist", [
-        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_pynet_D_mnist","M_pynet_D_fmnist","M_ViT_D_fmnist","M_ViT_D_mnist",
-        "M_pynetSoftmax_D_fmnist", "M_pynetSoftmax_D_mnist", "M_pynetSoftmax_D_cifar10",
-        "M_resnet18_D_fmnist","M_resnet50_D_fmnist","M_resnext50_D_fmnist",
-        "M_resnet18_D_mnist","M_resnet50_D_mnist","M_resnext50_D_mnist"],
-        "Filename for model.")
+    flags.DEFINE_bool("reduceDataset", False, "Reduce Dataset testing the implementation")
+    flags.DEFINE_enum("filename", "12", [ "0", "1", "2","3","4","5","6","7", "8","9","10","11","12","13",
+                                        "0_1","1_1","2_1","3_1","4_1","5_1","6_1",
+                                        "0_2","1_2","2_2","3_2","4_2","5_2","6_2"], "Filename for model.")
     app.run(main)

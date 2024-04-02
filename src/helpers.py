@@ -12,6 +12,9 @@ from PIL import Image
 import torchvision.transforms.functional as F
 import io
 import base64
+from model1 import NetCifar,PyNetSoftmax_MNIST, PyNet_MNIST, resnet18MNIST, resnet50MNIST, resnext50_32x4d_MNIST, resnet32_Cifar
+from vit_pytorch import ViT
+
 
 from enum import Enum
 class DS(Enum):
@@ -74,16 +77,14 @@ class paths:
 
 class RequstHandler:
 
-    def __init__(self, model:torch.nn.Module, device) -> None:
+    def __init__(self, model:torch.nn.Module, device,mapping:dict) -> None:
         if model is not None:
             self.model = model
             self.batch_size = 1
             self.channel = 1 #aus Model auslesen!
             self.image_size_target = (28, 28) #aus Model auslesen!
             self.input_size_model = (self.batch_size, self.channel, 28, 28)
-            self.mapping = {"0": "T-shirt/Top", "1": "Hosen", "2": "Pullover",
-                            "3": "Kleid", "4": "Mantel", "5": "Sandalen", "6": "Shirt",
-                            "7": "Sneaker", "8": "Rucksack", "9": "Ankle boot"} 
+            self.mapping = mapping
             self.device = device
             self.model = self.model.to(self.device)
 
@@ -143,18 +144,70 @@ class RequstHandler:
         data = data.to(self.device)
         return self.model(data)
 
+def getFileName(dataset:DS, model)-> str:
+	# Instantiate model, loss, and optimizer for training
+    if dataset == "fmnist" and model == "pynet_mnist":
+        name = "0"
+    elif dataset == "fmnist" and model == "pynetSoftmax_mnist":
+        name = "1"
+    elif dataset == "fmnist" and model == "resnet18_mnist":
+        name = "2"
+    elif dataset == "fmnist"and model == "resnet50_mnist":
+        name = "3"
+    elif dataset == "fmnist" and model == "resnext50_mnist":
+        name = "4"
+    elif dataset == "fmnist" and  model == "ViT_mnist":
+        name = "5"
+    elif dataset == "mnist" and model == "pynet_mnist":
+        name = "6"
+    elif dataset == "mnist" and model == "pynetSoftmax_mnist":
+        name = "7"
+    elif dataset == "mnist" and model == "resnet18_mnist":
+        name = "8"
+    elif dataset == "mnist"and model == "resnet50_mnist":
+        name = "9"
+    elif dataset == "mnist" and model == "resnext50_mnist":
+        name = "10"
+    elif dataset == "mnist" and  model == "ViT_mnist":
+        name = "11"
+    elif dataset == "cifar10" and  model == "PyNet_cifar10":
+        name = "12"
+    elif dataset == "cifar10" and model == "resNet32_cifar10":
+        name = "13"
+    else:
+        raise NotImplementedError
+    return name
 
+def getModel(name):
+    net = None
+    if name == "pynet_mnist":
+        net = PyNet_MNIST(in_channels=1)
+    elif name == "pynetSoftmax_mnist":
+        net = PyNetSoftmax_MNIST(in_channels=1)
+    elif name == "resnet18_mnist":
+        net = resnet18MNIST(in_channel=1)
+    elif name == "resnet50_mnist":
+        net = resnet50MNIST(in_channel=1)
+    elif name == "resnext50_mnist":
+        net = resnext50_32x4d_MNIST(in_channel=1)
+    elif name == "ViT_mnist":
+        # konfig entsprechend https://towardsdatascience.com/a-demonstration-of-using-vision-transformers-in-pytorch-mnist-handwritten-digit-recognition-407eafbc15b0
+        net = ViT(image_size = 28, patch_size = 7, num_classes = 10, dim = 64,
+                  depth = 6, heads = 8,mlp_dim = 128, dropout = 0.1, channels=1)
+    elif name == "PyNet_cifar10":
+        net = NetCifar()
+    elif name == "resNet32_cifar10":
+        net = resnet32_Cifar()
+    else:
+        raise NotImplementedError
 
+    return net
 
-
-
-
-
-def ld(ds='mnist', reduced=False, batchsize=128, num_workers=0) -> EasyDict():
+def ld(ds='mnist', reduced=False, batchsize=None, num_workers=0) :
     beginn = time.time()
     # ggf. normalisierung
     # durch Min-/Max-Scaling oder Z-Score-Normalisierung
-
+    """
     train_transforms = transforms.Compose([transforms.ToTensor()])
     test_transforms = transforms.Compose([transforms.ToTensor()])
 
@@ -172,13 +225,14 @@ def ld(ds='mnist', reduced=False, batchsize=128, num_workers=0) -> EasyDict():
         test_dataset = datasets.FashionMNIST(
             root=paths().get_path_dataset(datasetname='fmnist', train=False),
             train=False, download=True, transform=test_transforms)
-    else:
+    elif ds == 'cifar10':
         train_dataset = datasets.CIFAR10(
             root=paths().get_path_dataset(datasetname='cifar10',train=True),
             train=True, download=True, transform=train_transforms)
         test_dataset = datasets.CIFAR10(
             root=paths().get_path_dataset(datasetname='cifar10',train=False),
-            train=False, download=True, transform=test_transforms)
+            train=False, download=True, transform=test_transforms)"""
+    train_dataset, test_dataset = loadDS(ds=ds)
 
     if reduced is True:
         len_tr = len(train_dataset)//1000
@@ -191,10 +245,18 @@ def ld(ds='mnist', reduced=False, batchsize=128, num_workers=0) -> EasyDict():
         test_dataset = torch.utils.data.random_split(test_dataset,
                                                      [len_te, len(test_dataset)-len_te])[0]
 
-    train_loader = DataLoader(train_dataset, batch_size=batchsize,
+
+    if batchsize == None:
+        bs_train = len(train_dataset)
+        bs_test = len(test_dataset)
+    else:
+        bs_test = batchsize
+        bs_train = batchsize
+        
+    train_loader = DataLoader(train_dataset, batch_size=bs_train,
                               num_workers=num_workers, shuffle=True
                               )
-    test_loader = DataLoader(test_dataset, batch_size=batchsize,
+    test_loader = DataLoader(test_dataset, batch_size=bs_test,
                              num_workers=num_workers, shuffle=False
                              )
 
@@ -202,6 +264,37 @@ def ld(ds='mnist', reduced=False, batchsize=128, num_workers=0) -> EasyDict():
     print("Dauer Datenladen: ", dauer, "Sekunden")
 
     return EasyDict(train=train_loader, test=test_loader)
+
+
+def loadDS(ds):
+    train_transforms = transforms.Compose([transforms.ToTensor()])
+    test_transforms = transforms.Compose([transforms.ToTensor()])
+
+    if ds == 'mnist':
+        train_dataset = datasets.MNIST(
+            root=paths().get_path_dataset(datasetname='mnist',train=True),
+            train=True, download=True, transform=train_transforms)
+        test_dataset = datasets.MNIST(
+            root=paths().get_path_dataset(datasetname='mnist',train=False),
+            train=False, download=True, transform=test_transforms)
+    elif ds == 'fmnist':
+        train_dataset = datasets.FashionMNIST(
+            root=paths().get_path_dataset(datasetname='fmnist',train=True),
+            train=True, download=True, transform=train_transforms)
+        test_dataset = datasets.FashionMNIST(
+            root=paths().get_path_dataset(datasetname='fmnist', train=False),
+            train=False, download=True, transform=test_transforms)
+    elif ds == 'cifar10':
+        train_dataset = datasets.CIFAR10(
+            root=paths().get_path_dataset(datasetname='cifar10',train=True),
+            train=True, download=True, transform=train_transforms)
+        test_dataset = datasets.CIFAR10(
+            root=paths().get_path_dataset(datasetname='cifar10',train=False),
+            train=False, download=True, transform=test_transforms)
+    else:
+        raise NotImplementedError()
+
+    return train_dataset,test_dataset 
 
 
 """
