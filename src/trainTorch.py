@@ -2,7 +2,6 @@ from absl import app, flags
 import time
 import helpers as helpers
 import torch
-from model1 import CNN, PyNet
 
 FLAGS = flags.FLAGS
 
@@ -12,20 +11,14 @@ def main(_):
     # Load training and test data
     data = helpers.ld(ds=FLAGS.dataset, reduced=FLAGS.reduceDataset,
                               batchsize=FLAGS.bs)
-    inChannel = 1
+    
+    
     # Instantiate model, loss, and optimizer for training
-    if FLAGS.model == "cnn":
-        net = CNN(in_channels=inChannel)
-    elif FLAGS.model == "pynet":
-        net = PyNet(in_channels=inChannel)
-#    elif FLAGS.model == "net":
-#        net = Net(in_channels=inChannel)
-    else:
-        raise NotImplementedError
-
+    net = helpers.getModel(FLAGS.model)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cuda":
         net = net.cuda()
+
     loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
     optimizer = torch.optim.Adam(net.parameters(), lr=FLAGS.learningRate)
 
@@ -48,21 +41,20 @@ def main(_):
     dauer = time.time() - beginn
     print("Das Training ist nach: ", dauer, "Sekunden beendet")
     net.eval()
+    
     paths = helpers.paths()
-    filepath = paths.get_path_file_model(FLAGS.filename)
+    filepath = paths.get_path_model(prefix=helpers.getFileName(dataset=FLAGS.dataset, model= FLAGS.model))
     helpers.save_object_to_pkl(net, filepath)
 
 
 if __name__ == "__main__":
-    flags.DEFINE_enum("dataset", "fmnist", ["mnist", "fmnist", "cifar10"], 
+    flags.DEFINE_enum("dataset", "cifar10", ["mnist", "fmnist", "cifar10"], 
                       "Used Dataset.")
-    flags.DEFINE_integer("nb_epochs", 25, "Number of epochs.")
-    flags.DEFINE_integer("bs", 100, "Batchsize")
-    flags.DEFINE_enum("model", "pynet", ["cnn", "pynet", "net"], "Choose model.")
+    flags.DEFINE_integer("nb_epochs", 150, "Number of epochs.")
+    flags.DEFINE_integer("bs", 130, "Batchsize")
+    flags.DEFINE_enum("model", "PyNet_cifar10",
+                      ["pynet_mnist", "pynetSoftmax_mnist", "resnet18_mnist","resnet50_mnist","resnext50_mnist","ViT_mnist","PyNet_cifar10","resNet32_cifar10"], "Choose model.")
     flags.DEFINE_bool("reduceDataset", False, "Reduce Dataset")
-    flags.DEFINE_float("learningRate", 0.001, "Learning rate.")
-    flags.DEFINE_enum("filename", "M_pynet_D_fmnist", [
-        "M_cnn_D_fmnist", "M_cnn_D_mnist", "M_cnn_D_cifar10","M_pynet_D_mnist","M_pynet_D_fmnist","M_pynet_D_cifar10"],
-        "Filename for model.")
+    flags.DEFINE_float("learningRate", 0.0075, "Learning rate.")
 
     app.run(main)

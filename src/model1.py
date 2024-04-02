@@ -1,72 +1,86 @@
+
 # from keras import Model
 # from keras.layers import Dense, Dropout, Flatten, Conv2D
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+from torchvision.models import resnet18, resnet50, resnext50_32x4d
+import numpy as np
+import torch.nn.init as init
 
-# -------------- ResNetv2 ------------
+#----------------------------------------------------------------------------------------
+# MNIST-Models zum Verarbeiten von Bildern der shape 28x28x1
+#----------------------------------------------------------------------------------------
 
-# -------------- CNNs ------------
-# MNIST
+# -------------- ResNet ------------
+# In anlehnung an https://zablo.net/blog/post/pytorch-resnet-mnist-jupyter-notebook-2021/
+class resnet18MNIST(nn.Module):
+    def __init__(self, in_channel = 1):
+        super().__init__()
+        self.model = resnet18(num_classes=10)
+        self.model.conv1 = nn.Conv2d(in_channel,64,kernel_size=(7,7),stride=(2,2),padding=(3,3),bias=False)
+        self.loss = nn.CrossEntropyLoss()
 
+    def forward(self,x):
+        return self.model(x)
 
-# class Net(Model):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = Conv2D(64, 8, strides=(2, 2), activation="relu", padding="same")
-#         self.conv1 = Conv2D(64, 8, strides=(2, 2), activation="relu", padding="same")
-#         self.conv2 = Conv2D(128, 6, strides=(2, 2), activation="relu", padding="valid")
-#         self.conv3 = Conv2D(128, 5, strides=(1, 1), activation="relu", padding="valid")
-#         self.dropout = Dropout(0.25)
-#         self.flatten = Flatten()
-#         self.dense1 = Dense(128, activation="relu")
-#         self.dense2 = Dense(10)
+class resnet50MNIST(nn.Module):
+    def __init__(self, in_channel = 1):
+        super().__init__()
+        self.model = resnet50(num_classes=10)
+        self.model.conv1 = nn.Conv2d(in_channel,64,kernel_size=(7,7),stride=(2,2),padding=(3,3),bias=False)
+        self.loss = nn.CrossEntropyLoss()
 
-#     def call(self, x):
-#         x = self.conv1(x)
-#         x = self.conv2(x)
-#         x = self.conv3(x)
-#         x = self.dropout(x)
-#         x = self.flatten(x)
-#         x = self.dense1(x)
-#         return self.dense2(x)
+    def forward(self,x):
+        return self.model(x)
 
+# -------------- ResNext ------------
+# In anlehnung an https://zablo.net/blog/post/pytorch-resnet-mnist-jupyter-notebook-2021/
+class resnext50_32x4d_MNIST(nn.Module):
+    def __init__(self, in_channel = 1):
+        super().__init__()
+        self.model = resnext50_32x4d(num_classes=10)
+        self.model.conv1 = nn.Conv2d(in_channel,64,kernel_size=(7,7),stride=(2,2),padding=(3,3),bias=False)
+        self.loss = nn.CrossEntropyLoss()
 
-class CNN(nn.Module):
-    """Basic CNN architecture."""
+    def forward(self,x):
+        return self.model(x)
+
+# --------------- CNNs --------------
+class PyNet_MNIST(nn.Module):
+    """CNN architecture. This is the same MNIST model from pytorch/examples/mnist repository"""
 
     def __init__(self, in_channels=1):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(
-            in_channels, 64, 8, 1
-        )  # (batch_size, 3, 28, 28) --> (batch_size, 64, 21, 21)
-        self.conv2 = nn.Conv2d(
-            64, 128, 6, 2
-        )  # (batch_size, 64, 21, 21) --> (batch_size, 128, 8, 8)
-        self.conv3 = nn.Conv2d(
-            128, 128, 5, 1
-        )  # (batch_size, 128, 8, 8) --> (batch_size, 128, 4, 4)
-        self.fc1 = nn.Linear(
-            128 * 4 * 4, 128
-        )  # (batch_size, 128, 4, 4) --> (batch_size, 2048)
-        self.fc2 = nn.Linear(128, 10)  # (batch_size, 128) --> (batch_size, 10)
+        super(PyNet_MNIST, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, 32, 3, 1)
+        self.conv2 = nn.Conv2d(32, 64, 3, 1)
+        self.dropout1 = nn.Dropout(0.25)
+        self.dropout2 = nn.Dropout(0.5)
+        self.fc1 = nn.Linear(9216, 128)
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = x.view(-1, 128 * 4 * 4)
+        #x=x.reshape(1,1,28,28)
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)
+        x = self.dropout1(x)
+        x = torch.flatten(x, 1)
         x = self.fc1(x)
+        x = F.relu(x)
+        x = self.dropout2(x)
         x = self.fc2(x)
-        return x
+        output = F.log_softmax(x, dim=1)
+        return output
 
-
-class PyNet(nn.Module):
+class PyNetSoftmax_MNIST(nn.Module):
     """CNN architecture. This is the same MNIST model from 
     pytorch/examples/mnist repository"""
 
     def __init__(self, in_channels=1):
-        super(PyNet, self).__init__()
+        super(PyNetSoftmax_MNIST, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, 3, 1)
         self.conv2 = nn.Conv2d(32, 64, 3, 1)
         self.dropout1 = nn.Dropout(0.25)
@@ -86,13 +100,152 @@ class PyNet(nn.Module):
         x = F.relu(x)
         x = self.dropout2(x)
         x = self.fc2(x)
-        output = F.log_softmax(x, dim=1)
+        output = F.softmax(x, dim=1)
         return output
 
-# CIFAR-10 - by 
+# -------------- Transformer ------------
+# Impl by https://medium.com/mlearning-ai/vision-transformers-from-scratch-pytorch-a-step-by-step-guide-96c3313c2e0c
+
+def get_positional_embeddings(sequence_length, d):
+    result = torch.ones(sequence_length, d)
+    for i in range(sequence_length):
+        for j in range(d):
+            result[i][j] = np.sin(i / (10000 ** (j / d))) if j % 2 == 0 else np.cos(i / (10000 ** ((j - 1) / d)))
+    return result
+
+def patchify(images, n_patches):
+    n, c, h, w = images.shape
+
+    assert h == w, "Patchify method is implemented for square images only"
+
+    patches = torch.zeros(n, n_patches ** 2, h * w * c // n_patches ** 2)
+    patch_size = h // n_patches
+
+    for idx, image in enumerate(images):
+        for i in range(n_patches):
+            for j in range(n_patches):
+                patch = image[:, i * patch_size: (i + 1) * patch_size, j * patch_size: (j + 1) * patch_size]
+                patches[idx, i * n_patches + j] = patch.flatten()
+    return patches
+class MSA(nn.Module):
+    def __init__(self, d, n_heads=2):
+        super(MSA, self).__init__()
+        self.d = d
+        self.n_heads = n_heads
+
+        assert d % n_heads == 0, f"Can't divide dimension {d} into {n_heads} heads"
+
+        d_head = int(d / n_heads)
+        self.q_mappings = nn.ModuleList([nn.Linear(d_head, d_head) for _ in range(self.n_heads)])
+        self.k_mappings = nn.ModuleList([nn.Linear(d_head, d_head) for _ in range(self.n_heads)])
+        self.v_mappings = nn.ModuleList([nn.Linear(d_head, d_head) for _ in range(self.n_heads)])
+        self.d_head = d_head
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, sequences):
+        # Sequences has shape (N, seq_length, token_dim)
+        # We go into shape    (N, seq_length, n_heads, token_dim / n_heads)
+        # And come back to    (N, seq_length, item_dim)  (through concatenation)
+        result = []
+        for sequence in sequences:
+            seq_result = []
+            for head in range(self.n_heads):
+                q_mapping = self.q_mappings[head]
+                k_mapping = self.k_mappings[head]
+                v_mapping = self.v_mappings[head]
+
+                seq = sequence[:, head * self.d_head: (head + 1) * self.d_head]
+                q, k, v = q_mapping(seq), k_mapping(seq), v_mapping(seq)
+
+                attention = self.softmax(q @ k.T / (self.d_head ** 0.5))
+                seq_result.append(attention @ v)
+            result.append(torch.hstack(seq_result))
+        return torch.cat([torch.unsqueeze(r, dim=0) for r in result])
+class ViTBlockMNIST(nn.Module):
+    def __init__(self, hidden_d, n_heads, mlp_ratio=4):
+        super(ViTBlockMNIST, self).__init__()
+        self.hidden_d = hidden_d
+        self.n_heads = n_heads
+
+        self.norm1 = nn.LayerNorm(hidden_d)
+        self.mhsa = MSA(hidden_d, n_heads)
+        self.norm2 = nn.LayerNorm(hidden_d)
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_d, mlp_ratio * hidden_d),
+            nn.GELU(),
+            nn.Linear(mlp_ratio * hidden_d, hidden_d)
+        )
+
+    def forward(self, x):
+        out = x + self.mhsa(self.norm1(x))
+        out = out + self.mlp(self.norm2(out))
+        return out
+class ViTMNIST(nn.Module):
+    def __init__(self, chw, n_patches=7, n_blocks=2, hidden_d=8, n_heads=2, out_d=10):
+        # Super constructor
+        super(ViTMNIST, self).__init__()
+        
+        # Attributes
+        self.chw = chw # ( C , H , W )
+        self.n_patches = n_patches
+        self.n_blocks = n_blocks
+        self.n_heads = n_heads
+        self.hidden_d = hidden_d
+        
+        # Input and patches sizes
+        assert chw[1] % n_patches == 0, "Input shape not entirely divisible by number of patches"
+        assert chw[2] % n_patches == 0, "Input shape not entirely divisible by number of patches"
+        self.patch_size = (chw[1] / n_patches, chw[2] / n_patches)
+
+        # 1) Linear mapper
+        self.input_d = int(chw[0] * self.patch_size[0] * self.patch_size[1])
+        self.linear_mapper = nn.Linear(self.input_d, self.hidden_d)
+        
+        # 2) Learnable classification token
+        self.class_token = nn.Parameter(torch.rand(1, self.hidden_d))
+        
+        # 3) Positional embedding
+        self.register_buffer('positional_embeddings', get_positional_embeddings(n_patches ** 2 + 1, hidden_d), persistent=False)
+        
+        # 4) Transformer encoder blocks
+        self.blocks = nn.ModuleList([ViTBlockMNIST(hidden_d, n_heads) for _ in range(n_blocks)])
+        
+        # 5) Classification MLPk
+        self.mlp = nn.Sequential(
+            nn.Linear(self.hidden_d, out_d),
+            nn.Softmax(dim=-1)
+        )
+
+    def forward(self, images):
+        # Dividing images into patches
+        n, c, h, w = images.shape
+        patches = patchify(images, self.n_patches).to(self.positional_embeddings.device)
+        
+        # Running linear layer tokenization
+        # Map the vector corresponding to each patch to the hidden size dimension
+        tokens = self.linear_mapper(patches)
+        
+        # Adding classification token to the tokens
+        tokens = torch.cat((self.class_token.expand(n, 1, -1), tokens), dim=1)
+        
+        # Adding positional embedding
+        out = tokens + self.positional_embeddings.repeat(n, 1, 1)
+        
+        # Transformer Blocks
+        for block in self.blocks:
+            out = block(out)
+            
+        # Getting the classification token only
+        out = out[:, 0]
+        
+        return self.mlp(out)
+
+#----------------------------------------------------------------------------------------
+# CIFAR-10-Modelle zum Verarbeiten von Bildern der shape 32x32x3
+#----------------------------------------------------------------------------------------
+
+# --------------- CNNs --------------
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
-
-
 class NetCifar(nn.Module):
     def __init__(self):
         super().__init__()
@@ -112,8 +265,85 @@ class NetCifar(nn.Module):
         x = self.fc3(x)
         return x
 
-# -------------- Transformer ------------
 
+# --------------- ResNet --------------
+# https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
+def _weights_init(m):
+        init.kaiming_normal_(m.weight)
+class LambdaLayer(nn.Module):
+    def __init__(self, lambd):
+        super(LambdaLayer, self).__init__()
+        self.lambd = lambd
+
+    def forward(self, x):
+        return self.lambd(x)
+class RNBasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1, option='A'):
+        super(RNBasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != planes:
+            if option == 'A':
+                """
+                For CIFAR10 ResNet paper uses option A.
+                """
+                self.shortcut = LambdaLayer(lambda x:
+                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes//4, planes//4), "constant", 0))
+            elif option == 'B':
+                self.shortcut = nn.Sequential(
+                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                     nn.BatchNorm2d(self.expansion * planes)
+                )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        out = F.relu(out)
+        return out
+class ResNet(nn.Module):
+    def __init__(self, block, num_blocks, num_classes=10):
+        super(ResNet, self).__init__()
+        self.in_planes = 16
+
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
+        self.linear = nn.Linear(64, num_classes)
+
+        self.apply(_weights_init)
+
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, stride))
+            self.in_planes = planes * block.expansion
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = F.avg_pool2d(out, out.size()[3])
+        out = out.view(out.size(0), -1)
+        out = self.linear(out)
+        return out
+
+def resnet32_Cifar():
+    return ResNet(RNBasicBlock, [5, 5, 5])
+
+# --------------- Transformer --------------
 # CIFAR-10 - Impl by
 # https://github.com/pytorch/examples/blob/main/vision_transformer/main.py
 
@@ -239,69 +469,3 @@ class ViT32(nn.Module):
 
         class_token_embed = enc_output[:, 0]
         return self.MLPHead(class_token_embed)
-
-# MNIST - Impl --- Impl by https://www.kaggle.com/code/fold10/mnist-vision-transformer-vit/notebook
-
-
-# class Attention(nn.Module):
-#     def __init__(self, dim):
-#         super().__init__()
-#         self.scale = dim ** -0.5
-#         self.to_qkv = nn.Linear(dim, dim * 3, bias=False)
-
-#     def forward(self, x):
-#         b, n, _, h = *x.shape, 2
-#         qkv = self.to_qkv(x).chunk(3, dim=-1)
-#         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d',
-#                                           h=h), qkv)
-#         dots = einsum('b h i d, b h j d -> b h i j',
-#                       q, k) * self.scale
-#         attn = dots.softmax(dim=-1)
-#         out = einsum('b h i j, b h j d -> b h i d',
-#                      attn, v)
-#         out = rearrange(out, 'b h n d -> b n (h d)')
-#         return out
-
-
-# class Transformer(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-
-#         self.attention = Attention(32)
-#         self.norm1 = nn.LayerNorm(32)
-#         self.fc1 = nn.Linear(32, 32)
-#         self.norm2 = nn.LayerNorm(32)
-
-#     def forward(self, x):
-#         out = nn.functional.relu(self.attention(self.norm1(x)) + x)
-#         out = nn.functional.relu(self.fc1(self.norm2(out)) + out)
-#         return out
-
-
-# class MNISTTransformer(nn.Module):
-#     def __init__(self, depth):
-#         super().__init__()
-#         image_size = 28
-#         patch_size = 7
-#         num_patches = (image_size // patch_size) ** 2
-#         patch_dim = patch_size ** 2
-#         self.to_patches = lambda x: rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)',
-#                                               p1=patch_size, p2=patch_size)
-#         self.embedding = nn.Linear(patch_dim, 32)
-#         self.pos_embedding = nn.Parameter(
-#             torch.randn(1, num_patches + 1, 32))
-#         self.cls_token = nn.Parameter(torch.randn(1, 1, 32))
-#         self.features = nn.Sequential()
-#         for i in range(depth):
-#             self.features.append(Transformer())
-#         self.classifier = nn.Linear(32, 10)
-
-#     def forward(self, x):
-#         patches = self.to_patches(x)
-#         x = self.embedding(patches)
-#         b, n, _ = x.shape
-#         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b=b)
-#         x = torch.cat((cls_tokens, x), dim=1)
-#         x += self.pos_embedding[:, :(n + 1)]
-#         out = self.features(x)[:, 0]
-#         return self.classifier(out).flatten(1)
