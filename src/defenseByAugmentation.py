@@ -9,7 +9,6 @@ from skimage.util import random_noise
 FLAGS = flags.FLAGS
 
 # Für erste Tests wird die Augmentation durch ein Retraining mit geänderten Bildern durchgeführt.
-# TBD: Neues Torchvision-Dataset erstellen, das alle Bilder des Ursprungsdatasets beinhaltet + welche mit Gauss-Noise
 
 def main(_):
     beginn = time.time()
