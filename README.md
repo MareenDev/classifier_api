@@ -73,6 +73,7 @@ Ordner **src** führt Pythonskripte zur Modellbereitstellung.
    - Datei **src/defenseByAugmentation.py** führt ein Retraining mit Gauss-Blurr-verzerten Trainingsdaten zu einem bestehenden Modell durch.
    - Datei **src/defenseByInputTransformation.py** stellt Klassen zur Vorverarbeitung eines Dateneingangs bereit.
 * Datei **src/helpers.py** bündelt Hilfsfunktionen
+* Datei **src/model1.py** umfasst Klassendefinitionen zur Modellarchitektur.
 * Datei **src/testTorch.py** dient dem Testing von neuen Modellen. Als Performancefunktion dient die Akkuranz. 
 * Datei **src/trainTorch.py** dient dem Training von neuen Modellen
 * Datei **src/wsgi.py** wird für das Starten des Webservers benötigt.
