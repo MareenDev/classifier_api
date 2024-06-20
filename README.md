@@ -1,5 +1,5 @@
 # classifier_api
-##Beschreibung
+## Beschreibung
 Bereitstellung verschiedener Modelle (neuronale Netze) per Webservice.
 Jedes Modell wird unter einer eigenen URL bereitgestellt und kann mittels POST-Request im Datenformat JSON angefragt werden.
 Einem Modell sind im Post-Request Bilddaten, Bildgröße und Anzahl der Farbkanäle mit zu geben.
@@ -32,11 +32,10 @@ Aufrufpfade mit dem postfix /decision geben den Namen der identifizierten Klasse
    ```
 
 ## Starten des Webservices (VSCode/Entwicklungsumgebung)
-   Run Skript .\wsgi.py
-
-## Aufruf des Webservices
-   Aufruf der URL: http://127.0.0.1:5000/
-   #TBD
+   Run Skript scr\wsgi.py
+   
+   Hinweis Da die vorliegende Modellbereitstellung ausschließlich zum Zwecke einer Thesis verwendet wird, wird von Absicherungen des Servers abgesehen. 
+   Der Server wird als Entwicklungsserver verwendet. Diese Art der Nutzung ist fur eine Produktivnutzung, bzw. für andere Sicherheitsuntersuchungen nicht zu empfehlen, kann jedoch für den vorgesehenen Experimentaufbau genutzt werden.
 
 ## Beenden des Webservices
    ```
@@ -44,3 +43,15 @@ Aufrufpfade mit dem postfix /decision geben den Namen der identifizierten Klasse
    ```
 
 ## Aufbau
+Ordner 'model' führt trainierte Modelle, die als Webservice bereitgestellt werden können.
+Ordner 'src' führt Pythonskripte zur Modellbereitstellung.
+* Datei src\api.py definiert die verfügbaren Pfade/ Webservices . (Siehe Annotation @app.route) 
+* Dateien mit dem präfix src/defense dienen der Bereitstellung von Modellen mit Verteidigungsmaßnahmen.
+   - Datei src/defenseByAdversarialTraining.py führt ein adversariales PGD-Retraining zu einem bestehenden Modell durch.
+   - Datei src/defenseByAugmentation.py führt ein Retraining mit Gauss-Blurr-verzerten Trainingsdaten zu einem bestehenden Modell durch.
+   - Datei src/defenseByInputTransformation.py stellt Klassen zur Vorverarbeitung eines Dateneingangs bereit.
+* Datei src\helpers.py bündelt Hilfsfunktionen
+* Datei src\testTorch.py dient dem Testing von neuen Modellen. Als Performancefunktion dient die Akkuranz. 
+* Datei src\trainTorch.py dient dem Training von neuen Modellen
+* Datei src\wsgi.py wird für das Starten des Webservers benötigt.
+
