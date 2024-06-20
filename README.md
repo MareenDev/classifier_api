@@ -65,7 +65,7 @@ Aufrufpfade mit dem postfix **/decision** geben den Namen der identifizierten Kl
    ```
 
 ## Aufbau
-Ordner **model** führt trainierte Modelle, die als Webservice bereitgestellt werden können.
+Ordner **model** umfasst trainierte Modelle in Form von Pickle-Dateien.
 Ordner **src** führt Pythonskripte zur Modellbereitstellung.
 * Datei **src/api.py** definiert die verfügbaren Pfade/ Webservices . (Siehe Annotation @app.route) 
 * Dateien mit dem präfix **src/defense** dienen der Bereitstellung von Modellen mit Verteidigungsmaßnahmen.
@@ -74,8 +74,8 @@ Ordner **src** führt Pythonskripte zur Modellbereitstellung.
    - Datei **src/defenseByInputTransformation.py** stellt Klassen zur Vorverarbeitung eines Dateneingangs bereit.
 * Datei **src/helpers.py** bündelt Hilfsfunktionen
 * Datei **src/model1.py** umfasst Klassendefinitionen zur Modellarchitektur.
-* Datei **src/testTorch.py** dient dem Testing von neuen Modellen. Als Performancefunktion dient die Akkuranz. 
-* Datei **src/trainTorch.py** dient dem Training von neuen Modellen
+* Datei **src/testTorch.py** dient dem Testing von Modellen, welche in Ordner **model** gespeichert sind. Verwendete Performancefunktion: Akkuranz. 
+* Datei **src/trainTorch.py** dient dem Training von neuen Modellen. Nach abgeschlossenem Training werden die Modelle in Ordner **model** abgespeichert.
 * Datei **src/wsgi.py** wird für das Starten des Webservers benötigt.
 
 
