@@ -1,5 +1,14 @@
 # classifier_api
-API für Zugriff auf Fashion-MNIST-Classifier 
+##Beschreibung
+Bereitstellung verschiedener Modelle (neuronale Netze) per Webservice.
+Jedes Modell wird unter einer eigenen URL bereitgestellt und kann mittels POST-Request im Datenformat JSON angefragt werden.
+Einem Modell sind im Post-Request Bilddaten, Bildgröße und Anzahl der Farbkanäle mit zu geben.
+Aufrufpfade mit dem postfix /decision geben den Namen der identifizierten Klasse zurück. Aufrufe mit postfix /score geben die Ausgabe (Scorewerte) des Modells zurück. 
+### Requestbeispiel:
+![image](https://github.com/MareenDev/classifier_api/assets/115465960/cb763097-52b2-41a9-a300-fd3a20643180)
+
+### Response zu Request:
+![image](https://github.com/MareenDev/classifier_api/assets/115465960/6089f110-a694-40f3-9273-d2487964f9a7)
 
 ## Installation
 1. Conda-Umgebung erzeugen und aktivieren (per Anaconda Prompt)
@@ -33,3 +42,5 @@ API für Zugriff auf Fashion-MNIST-Classifier
    ```
    CTRL+C in Python-Prompt
    ```
+
+## Aufbau
